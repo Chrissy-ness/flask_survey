@@ -7,7 +7,7 @@
     <form action="/answer" method="POST">
         <div>
         {% for choice in choices %}
-        <input type="checkbox" name="answer" value="{{choice}}">{{choice}}
+        <input type="radio" name="answer" value="{{choice}}">{{choice}}
         {% endfor %}
         </div>
         <br>

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, flash
 from flask_debugtoolbar import DebugToolbarExtension
 from surveys import satisfaction_survey
 
@@ -13,6 +13,7 @@ length = len(satisfaction_survey.questions)
 
 RESPONSE = []
 redirect_num = 1
+previous_id = None
 
 @app.route('/')
 def home_route():
@@ -31,16 +32,29 @@ def start():
     redirect_num = 1
     return redirect("/survey/1")
 
-
 @app.route('/survey/<q_id>')
 def q_maker(q_id):
-    """Render a question template with its designated question, choices, and next button."""
-    status = f"Question {q_id}"
+    """Logic to execute when a proper q_id is passed and is within the boundaries of the given 'length'.
+    Furthermore, prevent the user from jumping to the next question when the current question is not answered."""
+    global RESPONSE
+    if int(q_id) >= 1 and int(q_id) <= length:
+        if len(RESPONSE)+1 == int(q_id):
+            status = f"Question {q_id}"
 
-    question = satisfaction_survey.questions[int(q_id)-1].question
-    choices = satisfaction_survey.questions[int(q_id)-1].choices
+            question = satisfaction_survey.questions[int(q_id)-1].question
+            choices = satisfaction_survey.questions[int(q_id)-1].choices
 
-    return render_template('question.html', status=status, title=title, question=question, choices=choices)
+            return render_template('question.html', status=status, title=title, question=question, choices=choices)
+
+        else: 
+            next_question = len(RESPONSE)+1
+            flash("You may not proceed or jump questions in the survey without answering the current question")
+            return redirect(f"/survey/{next_question}")
+    
+    else:
+        next_question = len(RESPONSE)+1
+        flash("The given URL does not exist, or is beyond the scope of this survey.")
+        return redirect(f"/survey/{next_question}")   
 
 @app.route('/answer', methods=["POST"])
 def process_answer():
@@ -70,84 +84,3 @@ def process_answer():
 @app.route('/complete')
 def complete():
     return render_template('complete.html', response=RESPONSE)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# @app.route("/")
-# def home():
-#     """Render a template of the title, instructions, and button to start the survey."""
-#     instructions = satisfaction_survey.instructions
-
-#     return render_template("home.html", title=title, instructions=instructions)
-
-# @app.route("/question/<number>")
-# def question_maker(number):
-#     """Render a template with questions based on the order given by the survey object."""
-#     url_num = int(number)
-#     question_num = url_num + 1
-#     next_num = url_num + 1
-
-#     #Variables for question and choices generated from the given instance. 
-#     question = satisfaction_survey.questions[url_num].question
-#     choices = satisfaction_survey.questions[url_num].choices
-
-#     #Variable to help the POST route render the next template.
-#     redirect_num = str(url_num)
-
-#     #Logic to execute when the next href link reaches the max number of questions, and direct the user to the concluding href. 
-#     if next_num > length-1:
-#         next_num = "end_survey"
-#         status = "Finish"
-#     else:
-#         status = "Next"
-
-#     #Variables to control the href link for the "back" button on the question.html.
-#     home_href = "/"
-#     previous_href = f"/question/{url_num - 1}"
-#     back_href = ""
-
-#     #Logic to execute when reaching the very first question upon spamming the back button. 
-#     if url_num == 0:
-#         back_href = home_href
-#     else:
-#         back_href = previous_href
-
-#     return render_template("question.html", url_num=url_num, q_num=question_num, question=question, choices=choices, back=back_href, status=status, response=RESPONSES)
-
-
-# @app.route("/question/next", methods=["POST"])
-# def next_route():
-#     answer = request.form["answer"]
-#     RESPONSES.append(answer)
-
-#     return redirect(f"/question/{redirect_num}")
-
-
-# @app.route("/question/end_survey")
-# def end_survey():
-#     return render_template("end_survey.html", response=RESPONSES)
