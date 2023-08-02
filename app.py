@@ -27,9 +27,11 @@ def start():
     """Clear previous instance of Response whenever a user clicks the start survey button."""
     global RESPONSE
     global redirect_num
+    global previous_id
 
     RESPONSE = []
     redirect_num = 1
+    previous_id = None
     return redirect("/survey/1")
 
 @app.route('/survey/<q_id>')
